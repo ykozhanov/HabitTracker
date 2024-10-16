@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "habittracker"
+version = "0.1.0"
+description = ""
+authors = ["Yuri Kozhanov <ykozhanov97@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+sqlalchemy = "^2.0.36"
+fastapi = "^0.115.2"
+uvicorn = "^0.32.0"
+asyncpg = "^0.29.0"
+alembic = "^1.13.3"
+python-dotenv = "^1.0.1"
+psycopg2 = "^2.9.10"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

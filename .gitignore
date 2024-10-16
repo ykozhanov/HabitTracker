@@ -1,0 +1,10 @@
+.env
+
+.idea
+
+alembic/__pycache__
+alembic/versions/__pycache__
+backend/__pycache__
+backend/routes/__pycache__
+frontend/__pycache__
+frontend/telegram_bot/__pycache__
