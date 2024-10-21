@@ -3,18 +3,13 @@ from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
+from config import get_database_url
+
 POSTGRES_USER=getenv("POSTGRES_USER", "admin")
 POSTGRES_PASSWORD=getenv("POSTGRES_PASSWORD", "admin")
 POSTGRES_DB=getenv("POSTGRES_DB", "habit_tracker")
 
-DATABASE_URL = getenv(
-    "DATABASE_URL_DEFAULT",
-    "postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@db:5432/{POSTGRES_DB}",
-).format(
-    POSTGRES_USER=POSTGRES_USER,
-    POSTGRES_PASSWORD=POSTGRES_PASSWORD,
-    POSTGRES_DB=POSTGRES_DB,
-)
+DATABASE_URL = get_database_url()
 
 engine = create_async_engine(DATABASE_URL)
 

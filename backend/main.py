@@ -1,11 +1,13 @@
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 
 from routes import user, habit
 from database import engine
 from models import Base
+from schemas import ErrorSchema
 
 
 @asynccontextmanager
@@ -18,5 +20,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(user.router, prefix="/users")
-app.include_router(habit.router, prefix="/habits")
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    error_response = ErrorSchema(
+        detail=exc.detail,
+        status_code=exc.status_code,
+    )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=error_response.model_dump()
+    )
+
+
+app.include_router(user.router, prefix="/api/users")
+app.include_router(habit.router, prefix="/api/habits")

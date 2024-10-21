@@ -1,7 +1,7 @@
 services:
   backend:
     build:
-      dockerfile: Dockerfile-Backend
+      context: backend/
     command:
       - "uvicorn"
       - "main:app"
@@ -23,8 +23,24 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - backend_data:/var/lib/postgresql/data/
     restart: always
+  frontend:
+    build:
+      context: frontend/telegram_bot/
+    command:
+      - "python"
+      - "main.py"
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    volumes:
+      - frontend_data:/var/lib/postgresql/data/
+    restart: always
+#  broker:
+#    image: redis
 
 volumes:
-  postgres_data:
+  - backend_data:
+  - frontend_data:

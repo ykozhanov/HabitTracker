@@ -1,16 +1,15 @@
 # Инициализация через 'alembic init -t async alembic' вместо 'alembic init alembic'. Для асинхронной работы.
 
 import asyncio
-from os import getenv
 from logging.config import fileConfig
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-from dotenv import load_dotenv
 from alembic import context
 
 from backend.models import Base
+from backend.config import get_database_url
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -27,20 +26,7 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
 
-load_dotenv()
-
-POSTGRES_USER=getenv("POSTGRES_USER", "admin")
-POSTGRES_PASSWORD=getenv("POSTGRES_PASSWORD", "admin")
-POSTGRES_DB=getenv("POSTGRES_DB", "habit_tracker")
-
-DATABASE_URL = getenv(
-    "DATABASE_URL_ALEMBIC",
-    "postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:5432/{POSTGRES_DB}",
-).format(
-    POSTGRES_USER=POSTGRES_USER,
-    POSTGRES_PASSWORD=POSTGRES_PASSWORD,
-    POSTGRES_DB=POSTGRES_DB,
-)
+DATABASE_URL = get_database_url(host="localhost")
 
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
