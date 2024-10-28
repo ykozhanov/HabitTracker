@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_session
-from ..controllers import UserController
+from ..controllers.user import UserController
 from ..schemas import LoginSchema, SuccessLoginSchema, CreateUserSchema
 from ..models import User
 from ..exceptions import AuthorizationError, NotFoundError
@@ -39,8 +40,8 @@ async def get_access_token(x_session_id: str = Header(...), session: AsyncSessio
     return SuccessLoginSchema(session_id=x_session_id, access_token=access_token)
 
 
-@router.post("/create/")
-async def create_user(user_data: CreateUserSchema, session: AsyncSession = Depends(get_session)) -> SuccessLoginSchema:
+@router.post("/register/")
+async def create_user(user_data: CreateUserSchema, session: AsyncSession = Depends(get_session)) -> JSONResponse:
     user_controller = UserController(session=session)
     try:
         session_id, access_token = await user_controller.add(**user_data.model_dump())
@@ -48,4 +49,5 @@ async def create_user(user_data: CreateUserSchema, session: AsyncSession = Depen
         raise HTTPException(detail=exc.detail, status_code=exc.status_code)
     except Exception as exc:
         raise HTTPException(detail=exc, status_code=400)
-    return SuccessLoginSchema(session_id=session_id, access_token=access_token)
+    result = SuccessLoginSchema(session_id=session_id, access_token=access_token, status_code=201)
+    return JSONResponse(content=result, status_code=result.status_code)

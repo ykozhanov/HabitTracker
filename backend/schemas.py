@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel
@@ -17,14 +16,16 @@ class ErrorSchema(SuccessSchema):
 class HabitSchema(BaseModel):
     id: Optional[int] = None
     title: str
-    description: Optional[str] = None
-    done: Optional[bool] = None
+    description: str | None
     count_repeat: Optional[int] = None
-    create_at: Optional[datetime] = None
-    user_id: Optional[int] = None
 
     class Config:
         orm_mode = True
+
+
+class PatchHabitSchema(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
 
 
 class SuccessGetHabitsListSchema(SuccessSchema):

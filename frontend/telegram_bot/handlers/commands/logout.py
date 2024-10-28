@@ -1,0 +1,24 @@
+from telebot.types import Message
+
+from .. import CommandsStatesGroup, bot
+
+
+@bot.message_handler(commands=["logout"])
+def handle_logout(message: Message) -> None:
+    with bot.retrieve_data(user_id=message.from_user.id, chat_id=message.chat.id) as data:
+        if data["login"].get("user"):
+            del data["login"]["user"]
+            if data.get("habits", None):
+                del data["habits"]
+
+    bot.send_message(
+        chat_id=message.chat.id,
+        text=f"Вы успешно вышли! Чтобы войти заново, нажмите /login",
+    )
+    bot.set_state(
+        user_id=message.from_user.id,
+        state=CommandsStatesGroup.logout,
+        chat_id=message.chat.id,
+    )
+
+

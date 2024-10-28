@@ -3,10 +3,10 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_session
-from ..controllers import UserController, HabitController
+from ..controllers.habit import HabitController
 from ..models import User, Habit
 from ..exceptions import NotFoundError, AuthorizationError
-from ..schemas import HabitSchema, SuccessGetHabitsListSchema, SuccessGetHabitSchema, SuccessSchema
+from ..schemas import HabitSchema, SuccessGetHabitsListSchema, SuccessGetHabitSchema, SuccessSchema, PatchHabitSchema
 from ..utils import get_token, get_user
 
 router = APIRouter()
@@ -51,7 +51,7 @@ async def add_habit(habit: HabitSchema, authorization: str = Header(...), sessio
     habits_controller = HabitController(user=user, session=session)
 
     try:
-        new_habit = habits_controller.add(**habit.model_dump(include={"title", "description"}))
+        new_habit = await habits_controller.add(**habit.model_dump(include={"title", "description"}))
     except NotFoundError as exc:
         raise HTTPException(detail=exc.detail, status_code=exc.status_code)
     except Exception as exc:
@@ -77,6 +77,38 @@ async def delete_habit(habit_id: int, authorization: str = Header(...), session:
     return SuccessSchema()
 
 
+@router.put("/{habit_id:int}/")
+async def put_habit(habit: HabitSchema, authorization: str = Header(...), session: AsyncSession = Depends(get_session)) -> SuccessGetHabitSchema:
+    token = get_token(authorization=authorization)
+    user: User = await get_user(token=token, session=session)
+    habits_controller = HabitController(user=user, session=session)
+
+    try:
+        update_habit = await habits_controller.update_habit_by_id(**habit.model_dump(include={"title", "description"}))
+    except (NotFoundError, AuthorizationError) as exc:
+        raise HTTPException(detail=exc.detail, status_code=exc.status_code)
+    except Exception as exc:
+        raise HTTPException(detail=exc, status_code=400)
+
+    return SuccessGetHabitSchema(data=update_habit)
+
+
+@router.patch("/{habit_id:int}/")
+async def patch_habit(habit: PatchHabitSchema, authorization: str = Header(...), session: AsyncSession = Depends(get_session)) -> SuccessGetHabitSchema:
+    token = get_token(authorization=authorization)
+    user: User = await get_user(token=token, session=session)
+    habits_controller = HabitController(user=user, session=session)
+
+    try:
+        update_habit = await habits_controller.update_habit_by_id(**habit.model_dump(include={"title", "description"}))
+    except (NotFoundError, AuthorizationError) as exc:
+        raise HTTPException(detail=exc.detail, status_code=exc.status_code)
+    except Exception as exc:
+        raise HTTPException(detail=exc, status_code=400)
+
+    return SuccessGetHabitSchema(data=update_habit)
+
+
 @router.get("/{habit_id:int}/mark/")
 async def mark_habit(habit_id: int, authorization: str = Header(...), session: AsyncSession = Depends(get_session)) -> SuccessSchema:
     token = get_token(authorization=authorization)
@@ -84,7 +116,7 @@ async def mark_habit(habit_id: int, authorization: str = Header(...), session: A
     habits_controller = HabitController(user=user, session=session)
 
     try:
-        await habits_controller.delete(habit_id=habit_id)
+        await habits_controller.mark_habit_by_id(habit_id=habit_id)
     except (NotFoundError, AuthorizationError) as exc:
         raise HTTPException(detail=exc.detail, status_code=exc.status_code)
     except Exception as exc:
