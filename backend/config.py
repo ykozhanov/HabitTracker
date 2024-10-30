@@ -11,12 +11,13 @@ POSTGRES_DB = getenv("POSTGRES_DB", "habit_tracker_default")
 
 DATABASE_URL_DEFAULT = getenv(
     "DATABASE_URL_DEFAULT",
-    "postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{HOST}:5432/{POSTGRES_DB}",
+    "postgresql{SYNC}://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{HOST}:5432/{POSTGRES_DB}",
 )
 
 
-def get_database_url(host: Optional[str] = "db") -> str:
+def get_database_url(sync: Optional[bool] = False, host: Optional[str] = "db") -> str:
     return DATABASE_URL_DEFAULT.format(
+        ASYNC="" if sync else "+asyncpg",
         POSTGRES_USER=POSTGRES_USER,
         POSTGRES_PASSWORD=POSTGRES_PASSWORD,
         HOST=host,

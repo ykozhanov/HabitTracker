@@ -1,7 +1,12 @@
 from telebot.types import CallbackQuery
 
-from .. import bot, UserSession, HabitAPIController, HabitSchema, HabitStatesGroup, HabitError, TimeOutError, LoginError
-from ..actions.get_all_habits import send_habit
+from frontend.telegram_bot.handlers.actions.get_all_habits import send_habit
+from frontend.telegram_bot.bot import bot
+from frontend.telegram_bot.states import HabitStatesGroup
+from frontend.telegram_bot.database import UserSession
+from frontend.telegram_bot.controllers import HabitAPIController
+from frontend.telegram_bot.exceptions import TimeOutError, LoginError, HabitError
+from frontend.telegram_bot.schemas import HabitSchema
 
 
 @bot.callback_query_handler(func=lambda call: call.data.split("#")[0] == "delete", state=HabitStatesGroup.habits)

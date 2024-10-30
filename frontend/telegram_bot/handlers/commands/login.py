@@ -1,6 +1,9 @@
 from telebot.types import Message, CallbackQuery
 
-from .. import GenKeyboards, UserStatesGroup, CommandsStatesGroup, bot, UserAPIController
+from frontend.telegram_bot.bot import bot
+from frontend.telegram_bot.states import CommandsStatesGroup, UserStatesGroup
+from frontend.telegram_bot.controllers import UserAPIController
+from frontend.telegram_bot.keyboards import GenKeyboards
 
 
 @bot.message_handler(commands=["login"])

@@ -1,6 +1,7 @@
 from telebot.types import Message
 
-from .. import CommandsStatesGroup, bot
+from frontend.telegram_bot.bot import bot
+from frontend.telegram_bot.states import CommandsStatesGroup
 
 
 @bot.message_handler(commands=["logout"])

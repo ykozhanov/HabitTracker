@@ -1,2 +1,4 @@
-from .user import UserController
-from .habit import HabitController
+from .user_controller import UserController
+from .habit_controller import HabitController
+from .habit_tracker_telegram_controller import HabitTrackerTelegramController
+from .habit_celery_telegram_controller import HabitCeleryTelegramController

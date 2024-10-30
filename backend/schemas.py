@@ -1,4 +1,5 @@
 from typing import Optional
+from datetime import time
 
 from pydantic import BaseModel
 
@@ -16,7 +17,7 @@ class ErrorSchema(SuccessSchema):
 class HabitSchema(BaseModel):
     id: Optional[int] = None
     title: str
-    description: str | None
+    description: Optional[str] = None
     count_repeat: Optional[int] = None
 
     class Config:
@@ -26,6 +27,16 @@ class HabitSchema(BaseModel):
 class PatchHabitSchema(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
+
+
+class HabitRemindTelegramSchema(BaseModel):
+    habit_id: Optional[int] = None
+    remind_time: time
+    chat_id: int
+    user_id: int
+
+    class Config:
+        orm_mode = True
 
 
 class SuccessGetHabitsListSchema(SuccessSchema):

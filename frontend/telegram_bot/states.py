@@ -19,23 +19,27 @@ class UserStatesGroup(StatesGroup):
 
 class HabitStatesGroup(StatesGroup):
     habits = State()
+    check = State()
 
 
 class HabitUpdateStatesGroup(StatesGroup):
     update_title = State()
     update_description = State()
+    update_remind_time = State()
     waiting_title = State()
     waiting_description = State()
+    waiting_remind_time_hour = State()
+    waiting_remind_time_minute = State()
     check_habit = State()
     back_or_again_update = State()
     back_or_again_create = State()
 
 
 class HabitCreateStatesGroup(StatesGroup):
-    update_title = State()
-    update_description = State()
     waiting_title = State()
     waiting_description = State()
+    waiting_remind_time_hour = State()
+    waiting_remind_time_minute = State()
     check_habit = State()
     back_or_again_update = State()
     back_or_again_create = State()

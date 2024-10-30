@@ -2,9 +2,9 @@ from typing import Optional
 
 import requests
 
-from . import URL_FOR_FRONTEND
-from . import get_session, UserSession
-from . import LoginError, TimeOutError
+from frontend.telegram_bot.config import URL_FOR_FRONTEND
+from frontend.telegram_bot.database import UserSession, get_session
+from frontend.telegram_bot.exceptions import TimeOutError, LoginError
 
 
 class UserAPIController:

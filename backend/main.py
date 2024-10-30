@@ -4,7 +4,7 @@ from typing import AsyncGenerator
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
-from routes import user, habit
+import routes
 from database import engine
 from models import Base
 from schemas import ErrorSchema
@@ -33,5 +33,6 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
     )
 
 
-app.include_router(user.router, prefix="/api/users")
-app.include_router(habit.router, prefix="/api/habits")
+app.include_router(routes.user_routes.router, prefix="/api/users")
+app.include_router(routes.habit_routes.router, prefix="/api/habits")
+app.include_router(routes.remind_routes.router, prefix="/api/reminds")

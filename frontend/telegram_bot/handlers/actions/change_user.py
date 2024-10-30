@@ -1,6 +1,8 @@
 from telebot.types import Message
 
-from .. import bot, CommandsStatesGroup, UserSession
+from frontend.telegram_bot.bot import bot
+from frontend.telegram_bot.states import CommandsStatesGroup
+from frontend.telegram_bot.database import UserSession
 
 
 @bot.message_handler(func=lambda message: "🔄" in message.text, state=CommandsStatesGroup.select_action)

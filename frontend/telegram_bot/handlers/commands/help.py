@@ -1,6 +1,9 @@
 from telebot.types import Message
 
-from .. import GenKeyboards, CommandsStatesGroup, bot, UserSession
+from frontend.telegram_bot.bot import bot
+from frontend.telegram_bot.states import CommandsStatesGroup
+from frontend.telegram_bot.database import UserSession
+from frontend.telegram_bot.keyboards import GenKeyboards
 
 
 @bot.message_handler(commands=["help"])

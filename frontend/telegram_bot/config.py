@@ -13,9 +13,11 @@ VIEW_MESSAGES = {
         **Заголовок**: {title}
         **Описание**: {description}
         **Повторений**: {this_count} из {all_count} | Осталось: {this_count - all_count}
+        **Напоминание**: в {hour} часов {minute} минут
     """,
     "check": """
         **Заголовок**: {title}
         **Описание**: {description}
+        **Напоминание**: в {hour} часов {minute} минут
         """
 }

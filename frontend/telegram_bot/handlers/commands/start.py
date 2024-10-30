@@ -1,6 +1,6 @@
 from telebot.types import Message, BotCommand
 
-from .. import bot
+from frontend.telegram_bot.bot import bot
 
 
 @bot.message_handler(commands=["start"])

@@ -1,7 +1,12 @@
 from telebot.types import Message, CallbackQuery, InlineKeyboardButton, ReplyKeyboardRemove
 from telegram_bot_pagination import InlineKeyboardPaginator
 
-from .. import bot, CommandsStatesGroup, UserSession, HabitAPIController, HabitSchema, HabitStatesGroup, COUNT_REPEAT_HABIT, VIEW_MESSAGES
+from frontend.telegram_bot.bot import bot
+from frontend.telegram_bot.states import CommandsStatesGroup, HabitStatesGroup
+from frontend.telegram_bot.database import UserSession
+from frontend.telegram_bot.controllers import HabitAPIController
+from frontend.telegram_bot.schemas import HabitSchema
+from frontend.telegram_bot.config import VIEW_MESSAGES, COUNT_REPEAT_HABIT
 
 
 @bot.message_handler(func=lambda message: "📝" in message.text, state=CommandsStatesGroup.select_action)
@@ -53,6 +58,7 @@ def send_habit(message: Message, page: int = 1) -> None:
         InlineKeyboardButton(text="Удалить привычку", callback_data=f"delete#{page}"),
         InlineKeyboardButton(text="Редактировать привычку", callback_data=f"update#{page}"),
     )
+
     paginator.add_after(
         InlineKeyboardButton(text="Создать новую привычку", callback_data=f"create#{page}"),
     )
@@ -62,6 +68,8 @@ def send_habit(message: Message, page: int = 1) -> None:
         description=habit.description,
         this_count=habit.count_repeat,
         all_count=COUNT_REPEAT_HABIT,
+        hout=habit.remind_time.hour,
+        minute=habit.remind_time.minute,
     )
     bot.send_message(
         chat_id=message.chat.id,
@@ -69,11 +77,3 @@ def send_habit(message: Message, page: int = 1) -> None:
         reply_markup=paginator.markup,
         parse_mode="Markdown",
     )
-
-
-# def get_habit_str(habit: HabitSchema) -> str:
-#     return f"""
-#         **Заголовок**: {habit.title}
-#         **Описание**: {habit.description}
-#         **Повторений**: {habit.count_repeat} из {COUNT_REPEAT_HABIT} | Осталось: {COUNT_REPEAT_HABIT - habit.count_repeat}
-#     """

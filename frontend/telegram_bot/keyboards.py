@@ -26,3 +26,13 @@ class GenKeyboards:
         keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
         keyboard.add(*buttons)
         return keyboard
+
+    @classmethod
+    def check_habit(cls, habit_id) -> InlineKeyboardMarkup:
+        buttons = [
+            InlineKeyboardButton(text="Уже выполнил", callback_data=f"completed#{habit_id}"),
+            InlineKeyboardButton(text="Еще не выполнил", callback_data=f"uncompleted#{habit_id}"),
+        ]
+        keyboard = InlineKeyboardMarkup()
+        keyboard.add(*buttons)
+        return keyboard
