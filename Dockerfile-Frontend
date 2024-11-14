@@ -1,0 +1,24 @@
+FROM python:3.13
+
+WORKDIR /app
+
+RUN pip install --upgrade pip "poetry==1.8.4"
+RUN poetry config virtualenvs.create false --local
+
+COPY frontend/telegram_bot/pyproject.toml ./
+COPY frontend/telegram_bot/poetry.lock ./
+
+RUN poetry install
+
+COPY remind/pyproject.toml ./
+COPY remind/poetry.lock ./
+
+RUN poetry install
+
+COPY frontend ./frontend
+COPY remind ./remind
+COPY wait-for-it.sh ./
+
+#WORKDIR /app/frontend/telegram_bot
+
+#CMD ["celery", "-A", "celery_telegram_controller.tasks", "worker", "--loglevel=info", "python", "main.py"]

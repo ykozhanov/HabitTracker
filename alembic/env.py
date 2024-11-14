@@ -8,7 +8,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
-from backend.models import Base
+from backend.database.models import Base
 from backend.config import get_database_url
 
 # this is the Alembic Config object, which provides
@@ -30,7 +30,7 @@ DATABASE_URL = get_database_url(host="localhost")
 
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
-# utils values from the config, defined by the needs of env.py,
+# handlers_habit_actions values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.

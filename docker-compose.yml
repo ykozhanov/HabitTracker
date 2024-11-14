@@ -1,10 +1,13 @@
 services:
   backend:
     build:
-      context: backend/
+      dockerfile: Dockerfile-Backend
     command:
+      - "./wait-for-it.sh"
+      - "db_backend:5432"
+      -  "--"
       - "uvicorn"
-      - "main:app"
+      - "backend.main:app"
       - "--host"
       - "0.0.0.0"
       - "--port"
@@ -14,33 +17,98 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      - db_backend
     restart: always
-  db:
+
+  db_backend:
     image: postgres:16.4
-    env_file:
-      - .env
+#    env_file:
+#      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_BACKEND}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_BACKEND}
+      POSTGRES_DB: ${POSTGRES_DB_BACKEND}
     ports:
       - "5432:5432"
     volumes:
       - backend_data:/var/lib/postgresql/data/
     restart: always
+
   frontend:
     build:
-      context: frontend/telegram_bot/
+      dockerfile: Dockerfile-Frontend
     command:
+      - "./wait-for-it.sh"
+      - "db_frontend:5432"
+      - "--"
       - "python"
-      - "main.py"
+      - "-m"
+      - "frontend.telegram_bot.main"
     env_file:
       - .env
     depends_on:
       - backend
+      - db_frontend
+      - remind_telegram_worker
+      - remind_telegram_beat
+    restart: always
+    volumes:
+      - redis_data:/data
+
+  db_frontend:
+    image: postgres:16.4
+#    env_file:
+#      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_FRONTEND}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_FRONTEND}
+      POSTGRES_DB: ${POSTGRES_DB_FRONTEND}
+    ports:
+      - "5433:5432"
     volumes:
       - frontend_data:/var/lib/postgresql/data/
     restart: always
-#  broker:
-#    image: redis
+
+  redis:
+    image: redis:alpine3.20
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
+  remind_telegram_worker:
+    build:
+      dockerfile: Dockerfile-Remind
+    volumes:
+      - redis_data:/data
+    command:
+      - "celery"
+      - "-A"
+      - "remind.telegram_bot.celery_telegram"
+      - "worker"
+      - "--loglevel=info"
+    depends_on:
+      - redis
+    restart: always
+
+  remind_telegram_beat:
+    build:
+      dockerfile: Dockerfile-Remind
+    volumes:
+      - redis_data:/data
+    command:
+      - "celery"
+      - "-A"
+      - "remind.telegram_bot.celery_telegram"
+      - "beat"
+      - "--loglevel=info"
+    depends_on:
+      - redis
+    restart: always
 
 volumes:
-  - backend_data:
-  - frontend_data:
+  backend_data:
+  frontend_data:
+  remind_data:
+  redis_data:

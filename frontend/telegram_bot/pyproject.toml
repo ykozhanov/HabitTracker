@@ -6,11 +6,13 @@ authors = ["Yuri Kozhanov <ykozhanov97@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
-pytelegrambotapi = "^4.23.0"
-requests = "^2.32.3"
-pydantic = "^2.9.2"
-python-telegram-bot-pagination = "^0.0.3"
+python = "3.13"
+pytelegrambotapi = "4.23.0"
+requests = "2.32.3"
+pydantic = "2.9.2"
+python-telegram-bot-pagination = "0.0.3"
+python-dotenv = "1.0.1"
+psycopg2 = "2.9.10"
 
 
 [build-system]

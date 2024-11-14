@@ -1,1 +1,1 @@
-from . import habit_routes, remind_routes, user_routes
+from . import habit_routes, user_routes

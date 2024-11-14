@@ -1,0 +1,15 @@
+FROM python:3.13
+
+WORKDIR /remind_service
+
+RUN pip install --upgrade pip "poetry==1.8.4"
+RUN poetry config virtualenvs.create false --local
+
+COPY remind/pyproject.toml ./
+COPY remind/poetry.lock ./
+
+RUN poetry install
+
+COPY remind ./remind
+
+#CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
