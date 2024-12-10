@@ -26,8 +26,9 @@ def get_database_url(sync: Optional[bool] = False, host: Optional[str] = "db", p
     )
 
 
-JWT_SECRET_KEY = getenv("JWT_SECRET_KEY_BACKEND", "JWT_SECRET_KEY")
-JWT_ALGORITHM = getenv("JWT_ALGORITHM_BACKEND", "HS256")
+JWT_PRIVATE_KEY = getenv("JWT_PRIVATE_KEY")
+JWT_PUBLIC_KEY = getenv("JWT_PUBLIC_KEY")
+JWT_ALGORITHM = "RS256"
 
 ACCESS_TOKEN_EXPIRE_MINUTES = int(getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 15))
 REFRESH_TOKEN_EXPIRE_DAYS = int(getenv("REFRESH_TOKEN_EXPIRE_DAYS", 30))

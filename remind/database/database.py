@@ -1,19 +1,15 @@
-# from os import getenv
 from typing import Generator
 from contextlib import contextmanager
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session as SessionORM
 
+from remind.config import get_database_url
 from .models import Base
 
-# from remind.config import get_database_url
+DATABASE_URL = get_database_url(sync=True)
 
-# POSTGRES_USER=getenv("POSTGRES_USER", "admin")
-# POSTGRES_PASSWORD=getenv("POSTGRES_PASSWORD", "admin")
-# POSTGRES_DB=getenv("POSTGRES_DB", "habit_tracker")
-
-engine = create_engine("sqlite:///habittracker_remind.db")
+engine = create_engine(url=DATABASE_URL)
 Base.metadata.create_all(engine)
 
 SessionLocal = sessionmaker(bind=engine)

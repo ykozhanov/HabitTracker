@@ -11,9 +11,9 @@ from frontend.telegram_bot.bot import bot
 from frontend.telegram_bot.bot.states import CommandsStatesGroup, HabitStatesGroup, HabitCreateStatesGroup
 from frontend.telegram_bot.bot.keyboards import GenKeyboards
 from frontend.telegram_bot.api import HabitAPIController
-from frontend.telegram_bot.exceptions import TimeOutError, LoginError, HabitError
+from frontend.telegram_bot.exceptions import TimeOutError, AuthenticationError, HabitError
 from frontend.telegram_bot.config import VIEW_MESSAGES
-from ..utils import get_user
+from ..utils import get_user, update_token
 
 logging.basicConfig(
     level=logging.INFO,
@@ -175,19 +175,20 @@ def check_create_new_habit(call: CallbackQuery):
     if call.data == "yes":
         with bot.retrieve_data(user_id=call.from_user.id, chat_id=call.message.chat.id) as data:
             user = get_user(data=data, user_id=call.from_user.id)
+            logger.info(f"check_create_new_habit data: {data}")
 
         if user:
             title = data["create"]["title"]
             description = data["create"]["description"]
             remind_time = time(hour=data["create"]["hour"], minute=data["create"]["minute"])
             remind_time_str = remind_time.strftime('%H:%M')
-            del data["create"]
             habit_api_controller = HabitAPIController(user=user)
 
             try:
                 habit = habit_api_controller.add_habit(title=title, description=description, remind_time=remind_time_str)
-                remind_telegram_controller = RemindTelegramController(user_token=user.access_token)
+                remind_telegram_controller = RemindTelegramController(refresh_token=user.refresh_token)
                 remind_telegram_controller.add_habit(habit=RemindHabitSchema.model_validate(habit.model_dump()))
+                del data["create"]
                 bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.id)
                 bot.send_message(
                     chat_id=call.message.chat.id,
@@ -205,16 +206,14 @@ def check_create_new_habit(call: CallbackQuery):
                     text=f"Что-то пошло не так.\n\n_{exc.detail}_\n\nВернуться в меню действий /help",
                     parse_mode="Markdown",
                 )
-            except LoginError:
-                bot.send_message(
-                    chat_id=call.message.chat.id,
-                    text=f"Ошибка аутентификации, попробуйте войти снова /login.",
-                )
-            except Exception as exc:
-                bot.send_message(
-                    chat_id=call.message.chat.id,
-                    text=f"Что-то пошло не так. {exc}",
-                )
+            except AuthenticationError:
+                if update_token(user=user, chat_id=call.message.chat.id):
+                    check_create_new_habit(call=call)
+            # except Exception as exc:
+            #     bot.send_message(
+            #         chat_id=call.message.chat.id,
+            #         text=f"Что-то пошло не так. {exc}",
+            #     )
         else:
             bot.send_message(
                 chat_id=call.message.chat.id,

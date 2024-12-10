@@ -32,6 +32,8 @@ services:
       - "5432:5432"
     volumes:
       - backend_data:/var/lib/postgresql/data/
+#      - ./backend/postgresql.conf:/etc/postgresql/postgresql.conf
+#    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
     restart: always
 
   frontend:
@@ -82,7 +84,12 @@ services:
       dockerfile: Dockerfile-Remind
     volumes:
       - redis_data:/data
+    env_file:
+      - .env
     command:
+      - "./wait-for-it.sh"
+      - "db_remind:5432"
+      - "--"
       - "celery"
       - "-A"
       - "remind.telegram_bot.celery_telegram"
@@ -90,6 +97,7 @@ services:
       - "--loglevel=info"
     depends_on:
       - redis
+      - db_remind
     restart: always
 
   remind_telegram_beat:
@@ -97,7 +105,12 @@ services:
       dockerfile: Dockerfile-Remind
     volumes:
       - redis_data:/data
+    env_file:
+      - .env
     command:
+      - "./wait-for-it.sh"
+      - "db_remind:5432"
+      - "--"
       - "celery"
       - "-A"
       - "remind.telegram_bot.celery_telegram"
@@ -105,6 +118,21 @@ services:
       - "--loglevel=info"
     depends_on:
       - redis
+      - db_remind
+    restart: always
+
+  db_remind:
+    image: postgres:16.4
+#    env_file:
+#      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_REMIND}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_REMIND}
+      POSTGRES_DB: ${POSTGRES_DB_REMIND}
+    ports:
+      - "5434:5432"
+    volumes:
+      - remind_data:/var/lib/postgresql/data/
     restart: always
 
 volumes:

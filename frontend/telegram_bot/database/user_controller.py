@@ -1,6 +1,20 @@
+import logging
+from typing import Optional
+
 from frontend.telegram_bot.exceptions import UserError
 from .models import User
 from .database import get_session
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        # logging.FileHandler('frontend.log'),
+        logging.StreamHandler(),
+    ]
+)
+
+logger = logging.getLogger(__name__)
 
 
 class UserController:
@@ -16,18 +30,17 @@ class UserController:
     # def _check_telegram_user_id(user_id_hash: bytes, password: str) -> bool:
     #     return bcrypt.checkpw(password.encode('utf-8'), user_id_hash)
 
-    def add_new_user(self, session_id: str, access_token: str) -> User:
+    def add_new_user(self, access_token: str, refresh_token: str) -> User:
         with get_session() as session:
-            user = session.query(User.telegram_user_id).filter(User.telegram_user_id == self._user_id).scalar()
-            if not user is None:
+            if session.query(User.telegram_user_id).filter(User.telegram_user_id == self._user_id).scalar():
                 raise UserError(f"Пользователь уже вошел.")
             # salt = bcrypt.gensalt()
             # telegram_user_id_hash = self._telegram_user_id_hash(user_id=user_id, salt=salt)
 
             new_user = User(
                 telegram_user_id=self._user_id,
-                session_id=session_id,
                 access_token=access_token,
+                refresh_token=refresh_token,
             )
 
             session.add(new_user)
@@ -36,25 +49,30 @@ class UserController:
 
             return new_user
 
-    def update(self, session_id: str, access_token: str) -> User:
+    def update(self, access_token: str, refresh_token: Optional[str] = None) -> User:
+        logger.info(f"update access_token: {access_token}, refresh_token: {refresh_token}")
         with get_session() as session:
-            user = session.query(User.telegram_user_id).filter(User.telegram_user_id == self._user_id).scalar()
-            if user is None:
+            if not (user := session.query(User).filter(User.telegram_user_id == self._user_id).scalar()):
                 raise UserError(f"Пользователя не существует.")
 
-            user.session_id = session_id
             user.access_token = access_token
+            if refresh_token:
+                user.refresh_token = refresh_token
 
             session.commit()
             session.refresh(user)
-
+            logger.info(f"update user.access_token: {user.access_token}")
             return user
 
     def get_user(self) -> User | None:
         with get_session() as session:
-            user = session.query(User).filter(User.telegram_user_id == self._user_id).scalar()
-            return user
+            return session.query(User).filter(User.telegram_user_id == self._user_id).scalar()
 
+    def delete_user(self) -> None:
+        with get_session() as session:
+            if user := session.query(User).filter(User.telegram_user_id == self._user_id).scalar():
+                session.delete(user)
+                session.commit()
 
     # @staticmethod
     # def _get_token(username: str, timedelta: datetime.timedelta):

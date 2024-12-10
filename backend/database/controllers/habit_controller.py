@@ -1,5 +1,5 @@
 from typing import Optional
-from datetime import time, datetime
+from datetime import time, datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -53,14 +53,14 @@ class HabitController:
         if habit.done:
             raise HabitError("Привычка уже выполнена.")
 
-        if isinstance(habit.last_time_check, datetime) and datetime.now().date() == habit.last_time_check.date():
+        if isinstance(habit.last_time_check, datetime) and datetime.now(tz=timezone.utc).date() == habit.last_time_check.date():
             raise HabitError("Привычка уже была отмечена как выполненная сегодня.")
 
         if habit.count_repeat < COUNT_REPEAT_HABIT:
             habit.count_repeat += 1
         else:
             habit.done = True
-        habit.last_time_check = datetime.now()
+        habit.last_time_check = datetime.now(tz=timezone.utc)
         await self._session.commit()
         await self._session.refresh(habit)
         return habit

@@ -101,5 +101,10 @@ class CreateUserSchema(LoginSchema):
 
 
 class SuccessLoginSchema(SuccessSchema):
-    session_id: str
     access_token: str
+    refresh_token: Optional[str] = None
+    token_type: str = "Bearer"
+
+
+class GetToken(BaseModel):
+    refresh_token: str

@@ -1,17 +1,22 @@
 from typing import Optional
 
 
-class LoginError(Exception):
+# class LoginError(Exception):
+#
+#     def __init__(self, detail: Optional[str] = "При входе что-то пошло не так."):
+#         self.detail = detail
 
-    def __init__(self, detail: Optional[str] = "При входе что-то пошло не так."):
+
+class AuthenticationError(Exception):
+
+    def __init__(self, detail: Optional[str] = "Необходимой войти снова."):
         self.detail = detail
 
 
 class AuthorizationError(Exception):
 
-    def __init__(self, detail: Optional[str] = "Необходимой войти снова."):
+    def __init__(self, detail: Optional[str] = "Недостаточно прав."):
         self.detail = detail
-
 
 
 class HabitError(Exception):

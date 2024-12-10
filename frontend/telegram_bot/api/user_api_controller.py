@@ -6,7 +6,7 @@ import requests
 # from backend.database.models import UserSession
 from frontend.telegram_bot.config import URL_BACKEND
 from frontend.telegram_bot.schemas import UserSchema
-from frontend.telegram_bot.exceptions import TimeOutError, LoginError, AuthorizationError
+from frontend.telegram_bot.exceptions import TimeOutError, AuthenticationError, AuthorizationError
 
 logging.basicConfig(
     level=logging.INFO,
@@ -34,7 +34,7 @@ class UserAPIController:
 
     @classmethod
     def login(cls, username: str, password: str, email: Optional[bool] = False) -> UserSchema:
-        # logger.info("start login")
+        logger.info("start login")
         url = URL_BACKEND + cls._urls["register"] if email else URL_BACKEND + cls._urls["login"]
         data = {
             "username": username,
@@ -46,8 +46,8 @@ class UserAPIController:
 
         try:
             # logger.info(f"url: {url}")
-            response = requests.post(url=url, json=data, timeout=60)
-            # logger.info(f"response: {response.json()}")
+            response = requests.post(url=url, data=data, timeout=60)
+            logger.info(f"response: {response.json()}")
             # logger.info(f"detail: {response.json().get("detail", None)}")
         except requests.exceptions.Timeout:
             raise TimeOutError()
@@ -67,18 +67,17 @@ class UserAPIController:
             #
             #     return session
         elif response.status_code == 401:
-            raise LoginError(detail=response.json().get("detail", None))
+            raise AuthenticationError(detail=response.json().get("detail", None))
 
     @classmethod
-    def token(cls, session_id: str) -> UserSchema:
+    def get_token(cls, refresh_token: str) -> UserSchema:
         url = URL_BACKEND + cls._urls["token"]
         headers = {
-            "X-Session-Id": session_id,
+            "Authorization": f"Bearer {refresh_token}",
         }
         response = requests.get(url=url, headers=headers)
-
-        if response.status_code == 403:
-            raise AuthorizationError()
+        logger.info(f"get_token data: {response.json()}")
+        if response.status_code == 401:
+            raise AuthenticationError()
 
         return UserSchema.model_validate(response.json())
-

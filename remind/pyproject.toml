@@ -3,10 +3,10 @@ name = "remind"
 version = "0.1.0"
 description = ""
 authors = ["Yuri Kozhanov <ykozhanov97@gmail.com>"]
-readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
-python = "3.13"
+python = "3.12.7"
 celery = {extras = ["redis"], version = "5.4.0"}
 sqlalchemy = "2.0.36"
 pydantic = "2.9.2"

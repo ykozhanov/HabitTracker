@@ -6,8 +6,8 @@ from frontend.telegram_bot.bot import bot
 from frontend.telegram_bot.bot.states import HabitStatesGroup
 from frontend.telegram_bot.api import HabitAPIController
 from frontend.telegram_bot.schemas import HabitSchema
-from frontend.telegram_bot.exceptions import LoginError, HabitError, TimeOutError
-from ..utils import send_habit, get_user
+from frontend.telegram_bot.exceptions import AuthenticationError, HabitError, TimeOutError
+from ..utils import send_habits, get_user, update_token
 
 
 @bot.callback_query_handler(state=RemindStatesGroup.check)
@@ -52,58 +52,29 @@ def check_habit_callback(call: CallbackQuery):
         )
 
 
-# from telebot.types import CallbackQuery
-#
-# from frontend.telegram_bot.handlers.handlers_actions.get_not_done_habits import send_habit
-# from frontend.telegram_bot.bot import bot
-# from frontend.telegram_bot.states import HabitStatesGroup
-# from frontend.telegram_bot.database import UserSession
-# from frontend.telegram_bot.api import HabitAPIController
-# from frontend.telegram_bot.exceptions import TimeOutError, LoginError, HabitError
-# from frontend.telegram_bot.schemas import HabitSchema
-
-
 @bot.callback_query_handler(func=lambda call: call.data.split("#")[0] == "completed", state=HabitStatesGroup.habits)
 def check_habit_callback_from_list_not_done(call: CallbackQuery):
     with bot.retrieve_data(user_id=call.from_user.id, chat_id=call.message.chat.id) as data:
         user = get_user(data=data, user_id=call.from_user.id)
-        habits: list[HabitSchema] = data.get("habits", [])
+        habits: list[HabitSchema] = data.get("habits")
 
-        page = int(call.data.split("#")[1])
-        habit_id = habits[page - 1].id
-
-        bot.delete_message(
-            chat_id=call.message.chat.id,
-            message_id=call.message.message_id,
-        )
-
-        if user:
+    page = int(call.data.split("#")[1])
+    habit_id = habits[page - 1].id
+    if user:
+        try:
             habit_api_controller = HabitAPIController(user=user)
-            try:
-                habit_api_controller.complete_habit(habit_id=habit_id)
-                # bot.delete_message(
-                #     chat_id=call.message.chat.id,
-                #     message_id=call.message.message_id
-                # )
+            habit_api_controller.complete_habit(habit_id=habit_id)
+            with bot.retrieve_data(user_id=call.from_user.id, chat_id=call.message.chat.id) as data:
                 data["habits"] = habit_api_controller.get_list_not_done_habits()
-                send_habit(message=call.message, page=page, user_id=call.from_user.id)
-            except (HabitError, TimeOutError) as exc:
-                bot.send_message(
-                    chat_id=call.message.chat.id,
-                    text=f"Что-то пошло не так. {exc.detail}",
-                )
-            except LoginError:
-                bot.send_message(
-                    chat_id=call.message.chat.id,
-                    text=f"Ошибка аутентификации, попробуйте войти снова /login.",
-                )
-            except Exception as exc:
-                bot.send_message(
-                    chat_id=call.message.chat.id,
-                    text=f"Ошибка:\n\n{exc if exc else "Что-то пошло не так."}\n\nВернуться в меню действий /help",
-                )
-        else:
-            bot.send_message(
-                chat_id=call.message.chat.id,
-                text="Для начала вам необходимой авторизоваться. Для этого нажмите /login.",
-            )
+            send_habits(page=page, user_id=call.from_user.id, message=call.message)
+        except AuthenticationError:
+            if update_token(user=user, chat_id=call.message.chat.id):
+                check_habit_callback_from_list_not_done(call=call)
+            return
+        bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.id)
+    else:
+        bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.id)
+        bot.send_message(
+            chat_id=call.message.chat.id,
+            text="Для начала вам необходимой авторизоваться. Для этого нажмите /login.",
+        )

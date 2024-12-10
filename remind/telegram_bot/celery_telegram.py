@@ -1,5 +1,5 @@
 from typing import Any
-from datetime import time, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import telebot
 import requests
@@ -21,7 +21,7 @@ celery = Celery(
 
 
 def get_execution_time(habit: RemindHabitSchema) -> datetime:
-    now = datetime.now()
+    now = datetime.now(tz=timezone.utc)
     if not habit.last_time_check and habit.remind_time > now.time():
         return now.replace(hour=habit.remind_time.hour, minute=habit.remind_time.minute)
     if habit.last_time_check.date() >= now.date():
@@ -55,18 +55,29 @@ class CeleryTelegramBotController:
 
 urls = {
     "habits": "/habits/",
+    "token": "/users/token/"
 }
+
+def get_access_token(user: User) -> str:
+    url = URL_BACKEND + urls.get("token")
+    headers = {
+        "Authorization": f"Bearer {user.refresh_token}"
+    }
+    response = requests.get(url=url, headers=headers, timeout=60)
+    if response.status_code == 200:
+        return response.json().get("access_token")
 
 
 @celery.task
 def send_all_remind():
     celery_task_controller = CeleryTaskController()
     users: list[User] = UserController.get_all_users()
-    url = URL_BACKEND + urls["habits"]
+    url = URL_BACKEND + urls.get("habits")
     for i_user in users:
+        access_token = get_access_token(user=i_user)
         user_info = i_user.user_info_telegram
         headers = {
-            "Authorization": f"Bearer {i_user.user_token}",
+            "Authorization": f"Bearer {access_token}",
         }
         response = requests.get(url=url, headers=headers, timeout=60)
         habits: list[RemindHabitSchema] = [RemindHabitSchema.model_validate(habit) for habit in response.json()]
@@ -82,7 +93,7 @@ def send_all_remind():
                 eta=execution_time,
             )
             last_time_send_celery_task = celery_task_controller.get_last_time_send_celery_task(habit_id=habit.id)
-            if last_time_send_celery_task and datetime.now() > last_time_send_celery_task:
+            if last_time_send_celery_task and datetime.now(tz=timezone.utc) > last_time_send_celery_task:
                 CeleryTelegramBotController.revoke_task_by_id(celery_task_controller.get_celery_task_id(habit_id=habit.id))
                 celery_task_controller.add_new_celery_task(celery_task_id=celery_task.id, user_id=i_user.id, habit_id=habit.id)
 

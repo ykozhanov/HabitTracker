@@ -5,8 +5,9 @@ from pydantic import BaseModel, field_validator
 
 
 class UserSchema(BaseModel):
-    session_id: str
     access_token: str
+    refresh_token: Optional[str] = None
+
 
 class HabitSchema(BaseModel):
     id: Optional[int] = None

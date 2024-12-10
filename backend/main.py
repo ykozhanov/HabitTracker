@@ -12,8 +12,8 @@ from .schemas import ErrorSchema
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # async with engine.begin() as conn:
+        # await conn.run_sync(Base.metadata.create_all)
     yield
     await engine.dispose()
 
@@ -33,5 +33,5 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
     )
 
 
-app.include_router(routes.user_routes.router, prefix="/api/users")
-app.include_router(routes.habit_routes.router, prefix="/api/habits")
+app.include_router(routes.user_routes.router, prefix="/api/users", tags=["User"])
+app.include_router(routes.habit_routes.router, prefix="/api/habits", tags=["Habit"])

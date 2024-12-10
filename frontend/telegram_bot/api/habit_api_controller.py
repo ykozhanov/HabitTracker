@@ -3,7 +3,7 @@ import requests
 
 from frontend.telegram_bot.config import URL_BACKEND
 from frontend.telegram_bot.database import User
-from frontend.telegram_bot.exceptions import HabitError, TimeOutError, LoginError
+from frontend.telegram_bot.exceptions import HabitError, TimeOutError, AuthenticationError, AuthorizationError
 from frontend.telegram_bot.schemas import HabitSchema
 
 
@@ -29,7 +29,7 @@ class HabitAPIController:
     def __init__(self, user: User):
         self._user = user
         self._headers = {
-            "X-Token": f"Bearer {user.access_token}",
+            "Authorization": f"Bearer {user.access_token}",
         }
 
     def get_list_not_done_habits(self) -> list[HabitSchema]:
@@ -46,7 +46,7 @@ class HabitAPIController:
             logger.info(f"result: {[HabitSchema.model_validate(i_habit) for i_habit in get_data]}")
             return [HabitSchema.model_validate(i_habit) for i_habit in get_data]
         elif response.status_code == 401:
-            raise LoginError(detail="Ошибка аутентификации.")
+            raise AuthenticationError(detail="Не удалось войти.")
         else:
             raise HabitError(detail=response.json().get("detail", ""))
 
@@ -60,11 +60,12 @@ class HabitAPIController:
 
         try:
             response = requests.post(url=url, headers=self._headers, json=data, timeout=60)
+            logger.info(f"add_habit data: {response.json()}")
         except requests.exceptions.Timeout:
             raise TimeOutError()
 
         if response.status_code == 401:
-            raise LoginError(detail="Ошибка аутентификации.")
+            raise AuthenticationError(detail="Не удалось войти.")
         elif response.status_code != 201:
             raise HabitError(detail=response.json().get("detail", ""))
 
@@ -82,7 +83,7 @@ class HabitAPIController:
             raise TimeOutError()
 
         if response.status_code == 401:
-            raise LoginError(detail="Ошибка аутентификации.")
+            raise AuthenticationError(detail="Не удалось войти.")
         elif response.status_code != 200:
             raise HabitError(detail=response.json().get("detail", ""))
 
@@ -100,7 +101,7 @@ class HabitAPIController:
             raise TimeOutError()
 
         if response.status_code == 401:
-            raise LoginError(detail="Ошибка аутентификации.")
+            raise AuthenticationError(detail="Не удалось войти.")
         elif response.status_code != 200:
             raise HabitError(detail=response.json().get("detail", ""))
 
@@ -123,6 +124,6 @@ class HabitAPIController:
             raise TimeOutError()
 
         if response.status_code == 401:
-            raise LoginError(detail="Ошибка аутентификации.")
+            raise AuthenticationError(detail="Не удалось войти.")
         elif response.status_code != 200:
             raise HabitError(detail=response.json().get("detail", ""))

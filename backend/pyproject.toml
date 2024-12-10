@@ -3,10 +3,10 @@ name = "habittracker_backend"
 version = "0.1.0"
 description = ""
 authors = ["Yuri Kozhanov <ykozhanov97@gmail.com>"]
-readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
-python = "3.13"
+python = "3.12.7"
 sqlalchemy = "2.0.36"
 fastapi = "0.115.2"
 uvicorn = "0.32.0"
@@ -14,9 +14,10 @@ asyncpg = "0.30.0"
 alembic = "1.13.3"
 python-dotenv = "1.0.1"
 psycopg2 = "2.9.10"
-pyjwt = "2.9.0"
-bcrypt = "4.2.0"
 greenlet = "3.1.1"
+pyjwt = {extras = ["crypto"], version = "2.10.0"}
+bcrypt = "4.2.1"
+python-multipart = "0.0.17"
 
 
 [build-system]

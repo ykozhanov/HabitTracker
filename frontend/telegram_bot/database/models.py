@@ -5,9 +5,9 @@ Base = declarative_base()
 
 
 class User(Base):
-    __tablename__ = "sessions"
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
     telegram_user_id = Column(Integer, nullable=False)
-    session_id = Column(String(length=36), unique=True, nullable=False)
     access_token = Column(String, nullable=False)
+    refresh_token = Column(String, unique=True, nullable=False)

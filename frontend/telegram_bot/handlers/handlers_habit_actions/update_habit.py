@@ -10,12 +10,12 @@ from frontend.telegram_bot.bot import bot
 from frontend.telegram_bot.bot.states import HabitStatesGroup, HabitUpdateStatesGroup, CommandsStatesGroup
 from frontend.telegram_bot.bot.keyboards import GenKeyboards
 from frontend.telegram_bot.api import HabitAPIController
-from frontend.telegram_bot.exceptions import TimeOutError, LoginError, HabitError
+from frontend.telegram_bot.exceptions import TimeOutError, AuthenticationError, HabitError
 from frontend.telegram_bot.schemas import HabitSchema
 from frontend.telegram_bot.config import VIEW_MESSAGES
 from frontend.telegram_bot.database import User
 
-from ..utils import send_habit, get_user
+from ..utils import send_habits, get_user, update_token
 
 logging.basicConfig(
     level=logging.INFO,
@@ -73,7 +73,7 @@ def update_title_callback(call: CallbackQuery):
         )
     elif call.data == "no":
         with bot.retrieve_data(user_id=call.from_user.id, chat_id=call.message.chat.id) as data:
-            habits: list[HabitSchema] = data.get("habits", [])
+            habits: list[HabitSchema] = data.get("habits")
             habit: HabitSchema = habits[data["update"]["page"] - 1]
             data["update"]["title"] = habit.title
         bot.send_message(
@@ -273,13 +273,9 @@ def waiting_update_remind_time_minute(message: Message):
 
 @bot.callback_query_handler(state=HabitUpdateStatesGroup.check_habit)
 def check_update_habit(call: CallbackQuery):
-    bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.id)
     if call.data == "yes":
         with bot.retrieve_data(user_id=call.from_user.id, chat_id=call.message.chat.id) as data:
-            user = get_user(data=data, user_id=call.from_user.id)
-
-        if user:
-            habits: list[HabitSchema] = data.get("habits", [])
+            habits: list[HabitSchema] = data.get("habits")
             page = data["update"]["page"]
             habit: HabitSchema = habits[page - 1]
             new_title = data["update"]["title"]
@@ -287,48 +283,37 @@ def check_update_habit(call: CallbackQuery):
             user: User = data["login"]["user"]
             remind_time: time = data["update"]["remind_time"]
             remind_time_str = remind_time.strftime("%H:%M")
-            del data["update"]
-            habit_api_controller = HabitAPIController(user=user)
-            try:
-                habit_api_controller.update_habit(habit_id=habit.id, title=new_title, description=new_description, remind_time=remind_time_str)
-                remind_telegram_controller = RemindTelegramController(user_token=user.access_token)
-                remind_telegram_controller.add_habit(habit=RemindHabitSchema.model_validate(habit.model_dump()), update=True)
 
+        if user:
+            try:
+                habit_api_controller = HabitAPIController(user=user)
+                habit_api_controller.update_habit(habit_id=habit.id, title=new_title, description=new_description, remind_time=remind_time_str)
+                remind_telegram_controller = RemindTelegramController(refresh_token=user.refresh_token)
+                remind_telegram_controller.add_habit(habit=RemindHabitSchema(**habit.model_dump()), update=True)
                 data["habits"] = habit_api_controller.get_list_not_done_habits()
-                bot.set_state(
-                    user_id=call.from_user.id,
-                    state=HabitStatesGroup.habits,
-                    chat_id=call.message.chat.id,
-                )
-                bot.answer_callback_query(
-                    callback_query_id=call.id,
-                    text="Привычка успешно обновлена!",
-                    show_alert=True,
-                )
-                send_habit(message=call.message, page=page, user_id=call.from_user.id)
-            except (HabitError, TimeOutError) as exc:
-                # detail = str(exc.detail).replace("*", "\\*").replace("_", "\\_")
-                bot.send_message(
-                    chat_id=call.message.chat.id,
-                    text=f"Ошибка.\n\n{exc.detail if exc.detail else "Что-то пошло не так"}\n\nВернуться к выбору действия /help",
-                )
-            except LoginError:
-                bot.send_message(
-                    chat_id=call.message.chat.id,
-                    text=f"Ошибка аутентификации, попробуйте войти снова /login.",
-                )
-            except Exception as exc:
-                logger.info(f"check_update_habit exc: {exc}")
-                bot.send_message(
-                    chat_id=call.message.chat.id,
-                    text=f"Ошибка.\n\n{exc if exc else "Что-то пошло не так"}\n\nВернуться к выбору действия /help",
-                )
+            except AuthenticationError:
+                if update_token(user=user, chat_id=call.message.chat.id):
+                    check_update_habit(call=call)
+                return
+            bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.id)
+            bot.set_state(
+                user_id=call.from_user.id,
+                state=HabitStatesGroup.habits,
+                chat_id=call.message.chat.id,
+            )
+            bot.answer_callback_query(
+                callback_query_id=call.id,
+                text="Привычка успешно обновлена!",
+                show_alert=True,
+            )
+            send_habits(page=page, user_id=call.from_user.id, message=call.message)
         else:
             bot.send_message(
                 chat_id=call.message.chat.id,
                 text="Для начала вам необходимой авторизоваться.\nДля этого нажмите /login.",
             )
     elif call.data == "no":
+        bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.id)
         bot.send_message(
             chat_id=call.message.chat.id,
             text=f"Попробовать снова?",
@@ -340,6 +325,7 @@ def check_update_habit(call: CallbackQuery):
             chat_id=call.message.chat.id,
         )
     else:
+        bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.id)
         bot.send_message(
             chat_id=call.message.chat.id,
             text="Извините, я вас не совсем понял.\nПодскажите пожалуйста, вы подтверждаете обновление привычки?",
@@ -370,7 +356,7 @@ def back_or_again_update(call: CallbackQuery):
             state=HabitStatesGroup.habits,
             chat_id=call.message.chat.id,
         )
-        send_habit(message=call.message, page=page, user_id=call.from_user.id)
+        send_habits(page=page, user_id=call.from_user.id, message=call.message)
     else:
         bot.send_message(
             chat_id=call.message.chat.id,

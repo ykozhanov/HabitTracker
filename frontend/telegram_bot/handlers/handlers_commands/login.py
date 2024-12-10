@@ -11,7 +11,7 @@ from frontend.telegram_bot.bot.keyboards import GenKeyboards
 from frontend.telegram_bot.api import UserAPIController
 from frontend.telegram_bot.config import BOT_TOKEN, VIEW_MESSAGES
 from frontend.telegram_bot.database import User, UserController
-from frontend.telegram_bot.exceptions import LoginError
+from frontend.telegram_bot.exceptions import AuthorizationError, AuthenticationError
 from ..utils import get_user
 
 logging.basicConfig(
@@ -112,12 +112,12 @@ def handle_waiting_password(message: Message) -> None:
             user_controller = UserController(user_id=message.from_user.id)
             user_info = user_controller.get_user()
             if user_info:
-                user = user_controller.update(session_id=user_data.session_id, access_token=user_data.access_token)
-                remind_telegram_controller = RemindTelegramController(user_token=user_info.access_token)
-                remind_telegram_controller.update_user_token(new_user_token=user.access_token)
+                user = user_controller.update(access_token=user_data.access_token, refresh_token=user_data.refresh_token)
+                remind_telegram_controller = RemindTelegramController(refresh_token=user_info.refresh_token)
+                remind_telegram_controller.update_refresh_token(new_refresh_token=user.refresh_token)
             else:
-                user = user_controller.add_new_user(session_id=user_data.session_id, access_token=user_data.access_token)
-                remind_telegram_controller = RemindTelegramController(user_token=user.access_token)
+                user = user_controller.add_new_user(access_token=user_data.access_token, refresh_token=user_data.refresh_token)
+                remind_telegram_controller = RemindTelegramController(refresh_token=user.refresh_token)
                 remind_telegram_controller.add_user(chat_id=message.chat.id, user_id=message.from_user.id,
                                                     bot_token=BOT_TOKEN)
             data["login"]["user"] = user
@@ -127,20 +127,15 @@ def handle_waiting_password(message: Message) -> None:
                 text=f"Отлично!\n\nВы успешно вошли как {username!r}.\n\nЧто хотите сделать?",
                 reply_markup=GenKeyboards.select_action_reply(),
             )
-        except LoginError as exc:
-            logger.error("LoginError")
-            detail = exc.detail.replace("_", "\\_").replace("*", "\\*") if exc.detail else "Что-то пошло не так."
+        except AuthenticationError:
             bot.send_message(
                 chat_id=message.chat.id,
-                text=f"Ошибка входа!\n\n_{detail}_\n\nПопробуйте войти снова, для этого нажмите /login",
-                parse_mode="Markdown",
+                text="Ошибка входа!\nПопробуйте войти снова, для этого нажмите /login",
             )
-        except Exception as exc:
-            detail = str(exc).replace("_", "\\_").replace("*", "\\*") if exc else "Что-то пошло не так."
+        except Exception:
             bot.send_message(
                 chat_id=message.chat.id,
-                text=f"Что-то пошло не так:\n\n_{detail}_.\n\nПопробуйте войти снова, для этого нажмите /login",
-                parse_mode="Markdown",
+                text="Что-то пошло не так.\nПопробуйте войти снова, для этого нажмите /login",
             )
         bot.set_state(
             user_id=message.from_user.id,
@@ -246,31 +241,26 @@ def handle_callback_check_new_user(call: CallbackQuery) -> None:
             try:
                 user_data = UserAPIController.login(username=username, password=password, email=email)
                 user_controller = UserController(user_id=call.from_user.id)
-                user = user_controller.add_new_user(session_id=user_data.session_id, access_token=user_data.access_token)
+                user = user_controller.add_new_user(access_token=user_data.access_token, refresh_token=user_data.refresh_token)
                 data["login"]["user"] = user
-                remind_telegram_controller = RemindTelegramController(user_token=user.access_token)
+                remind_telegram_controller = RemindTelegramController(refresh_token=user.refresh_token)
                 remind_telegram_controller.add_user(chat_id=call.message.chat.id, user_id=call.from_user.id, bot_token=BOT_TOKEN)
+                bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.id)
                 bot.send_message(
                     chat_id=call.message.chat.id,
                     text=f"Отлично!\n\nВы успешно зарегистрировались и вошли как {username!r}.\n\nЧто хотите сделать? ⏬",
                     reply_markup=GenKeyboards.select_action_reply(),
                 )
-            except LoginError as exc:
-                logger.error("LoginError")
-                detail = exc.detail.replace("_", "\\_").replace("*", "\\*") if exc.detail else "Что-то пошло не так."
-                logger.error(f"detail: {detail}")
+            except AuthenticationError:
                 bot.send_message(
                     chat_id=call.message.chat.id,
-                    text=f"Ошибка входа!\n\n_{detail}_\n\nПопробуйте войти снова, для этого нажмите /login",
-                    parse_mode="Markdown",
+                    text=f"Ошибка входа!\nПопробуйте войти снова, для этого нажмите /login",
                 )
-            except Exception as exc:
-                detail = str(exc).replace("_", "\\_").replace("*", "\\*") if exc else "Что-то пошло не так."
-                bot.send_message(
-                    chat_id=call.message.chat.id,
-                    text=f"Что-то пошло не так:\n\n_{detail}_\n\nПопробуйте войти снова, для этого нажмите /login",
-                    parse_mode="Markdown",
-                )
+            # except Exception:
+            #     bot.send_message(
+            #         chat_id=call.message.chat.id,
+            #         text=f"Что-то пошло не так.\nПопробуйте войти снова, для этого нажмите /login",
+            #     )
         else:
             bot.send_message(
                 chat_id=call.message.chat.id,

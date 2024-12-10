@@ -6,8 +6,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from .models import Base
 
-from os import getenv
-
 from frontend.telegram_bot.config import get_database_url
 
 logging.basicConfig(
@@ -20,10 +18,6 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-
-POSTGRES_USER=getenv("POSTGRES_USER", "admin")
-POSTGRES_PASSWORD=getenv("POSTGRES_PASSWORD", "admin")
-POSTGRES_DB=getenv("POSTGRES_DB", "habit_tracker")
 
 DATABASE_URL = get_database_url(sync=True)
 
