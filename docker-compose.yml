@@ -32,8 +32,6 @@ services:
       - "5432:5432"
     volumes:
       - backend_data:/var/lib/postgresql/data/
-#      - ./backend/postgresql.conf:/etc/postgresql/postgresql.conf
-#    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
     restart: always
 
   frontend:
@@ -59,8 +57,6 @@ services:
 
   db_frontend:
     image: postgres:16.4
-#    env_file:
-#      - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER_FRONTEND}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_FRONTEND}
@@ -90,11 +86,11 @@ services:
       - "./wait-for-it.sh"
       - "db_remind:5432"
       - "--"
-      - "celery"
-      - "-A"
-      - "remind.telegram_bot.celery_telegram"
-      - "worker"
-      - "--loglevel=info"
+      - "supervisord"
+      - "-c"
+      - "/etc/supervisor/conf.d/supervisord.conf"
+    ports:
+      - "5555:5555"
     depends_on:
       - redis
       - db_remind
@@ -123,8 +119,6 @@ services:
 
   db_remind:
     image: postgres:16.4
-#    env_file:
-#      - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER_REMIND}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_REMIND}

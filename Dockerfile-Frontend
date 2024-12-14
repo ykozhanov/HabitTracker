@@ -19,6 +19,4 @@ COPY frontend ./frontend
 COPY remind ./remind
 COPY wait-for-it.sh ./
 
-#WORKDIR /app/frontend/telegram_bot
-
-#CMD ["celery", "-A", "celery_telegram_controller.tasks", "worker", "--loglevel=info", "python", "main.py"]
+CMD ["celery", "-A", "celery_telegram_controller.tasks", "worker", "--loglevel=info", "python", "main.py"]

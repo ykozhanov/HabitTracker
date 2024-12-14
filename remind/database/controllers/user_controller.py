@@ -18,21 +18,35 @@ class UserController:
 
     def delete_user(self) -> None:
         with get_session() as session:
-            user = session.query(User).filter(User.refresh_token == self._refresh_token).scalar()
+            user = (
+                session.query(User)
+                .filter(User.refresh_token == self._refresh_token)
+                .scalar()
+            )
             session.delete(user)
             session.commit()
 
-    def get_user(self) -> User | None:
+    def get_user(self) -> User:
         with get_session() as session:
-            return session.query(User).filter(User.refresh_token == self._refresh_token).scalar()
+            user: User = (
+                session.query(User)
+                .filter(User.refresh_token == self._refresh_token)
+                .scalar()
+            )
+            return user
 
     @staticmethod
     def get_all_users() -> list[User]:
         with get_session() as session:
-            return session.query(User).scalars().all()
+            users: list[User] = session.query(User).all()
+            return users
 
     def update_refresh_token(self, new_refresh_token: str) -> None:
         with get_session() as session:
-            update_sql = update(User).where(User.refresh_token == self._refresh_token).values(refresh_token=new_refresh_token)
+            update_sql = (
+                update(User)
+                .where(User.refresh_token == self._refresh_token)
+                .values(refresh_token=new_refresh_token)
+            )
             session.execute(update_sql)
             session.commit()

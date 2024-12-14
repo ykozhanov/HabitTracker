@@ -1,4 +1,4 @@
-from remind.database import get_session, User, UserInfoTelegram
+from remind.database import User, UserInfoTelegram, get_session
 
 
 class UserInfoTelegramController:
@@ -6,7 +6,9 @@ class UserInfoTelegramController:
     def __init__(self, user: User):
         self._user = user
 
-    def add_user_info_telegram(self, chat_id_telegram: int, user_id_telegram: int, bot_token: str) -> UserInfoTelegram:
+    def add_user_info_telegram(
+        self, chat_id_telegram: int, user_id_telegram: int, bot_token: str
+    ) -> UserInfoTelegram:
         with get_session() as session:
             new_user_info_telegram = UserInfoTelegram(
                 user_id_telegram=user_id_telegram,

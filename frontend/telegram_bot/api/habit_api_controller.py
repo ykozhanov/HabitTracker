@@ -1,22 +1,13 @@
-import logging
 import requests
 
 from frontend.telegram_bot.config import URL_BACKEND
 from frontend.telegram_bot.database import User
-from frontend.telegram_bot.exceptions import HabitError, TimeOutError, AuthenticationError, AuthorizationError
-from frontend.telegram_bot.schemas import HabitSchema
-
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        # logging.FileHandler('frontend.log'),
-        logging.StreamHandler(),
-    ]
+from frontend.telegram_bot.exceptions import (
+    AuthenticationError,
+    HabitError,
+    TimeOutError,
 )
-
-logger = logging.getLogger(__name__)
+from frontend.telegram_bot.schemas import HabitSchema
 
 
 class HabitAPIController:
@@ -42,8 +33,6 @@ class HabitAPIController:
 
         if response.status_code == 200:
             get_data = response.json().get("data", [])
-            logger.info(f"get_data: {get_data}")
-            logger.info(f"result: {[HabitSchema.model_validate(i_habit) for i_habit in get_data]}")
             return [HabitSchema.model_validate(i_habit) for i_habit in get_data]
         elif response.status_code == 401:
             raise AuthenticationError(detail="Не удалось войти.")
@@ -59,8 +48,9 @@ class HabitAPIController:
         }
 
         try:
-            response = requests.post(url=url, headers=self._headers, json=data, timeout=60)
-            logger.info(f"add_habit data: {response.json()}")
+            response = requests.post(
+                url=url, headers=self._headers, json=data, timeout=60
+            )
         except requests.exceptions.Timeout:
             raise TimeOutError()
 
@@ -87,7 +77,9 @@ class HabitAPIController:
         elif response.status_code != 200:
             raise HabitError(detail=response.json().get("detail", ""))
 
-    def update_habit(self, habit_id: int, title: str, description: str, remind_time: str) -> HabitSchema:
+    def update_habit(
+        self, habit_id: int, title: str, description: str, remind_time: str
+    ) -> HabitSchema:
         url = URL_BACKEND + self._urls["habit_id"].format(habit_id=habit_id)
         data = {
             "title": title,
@@ -96,7 +88,9 @@ class HabitAPIController:
         }
 
         try:
-            response = requests.put(url=url, headers=self._headers, json=data, timeout=60)
+            response = requests.put(
+                url=url, headers=self._headers, json=data, timeout=60
+            )
         except requests.exceptions.Timeout:
             raise TimeOutError()
 
@@ -108,11 +102,7 @@ class HabitAPIController:
         response_data = response.json().get("data")
         if not response_data:
             raise HabitError(detail="Привычка не загрузилась.")
-        logger.info(f"update_habit data (type {type(response.json())}): {response.json().get("data")}")
-        try:
-            HabitSchema.model_validate(response_data)
-        except Exception as exc:
-            logger.info(f"update_habit exc: {exc}")
+        HabitSchema.model_validate(response_data)
         return HabitSchema.model_validate(response_data)
 
     def complete_habit(self, habit_id: int) -> None:

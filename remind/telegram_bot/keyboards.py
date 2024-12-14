@@ -1,16 +1,17 @@
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 
 class GenRemindKeyboards:
 
-    def __init__(self):
-        pass
-
     @staticmethod
     def check_habit(habit_id: int) -> InlineKeyboardMarkup:
         buttons = [
-            InlineKeyboardButton(text="Уже выполнил", callback_data=f"completed#{habit_id}"),
-            InlineKeyboardButton(text="Еще не выполнил", callback_data=f"uncompleted#{habit_id}"),
+            InlineKeyboardButton(
+                text="Да", callback_data=f"remind#completed#{habit_id}"
+            ),
+            InlineKeyboardButton(
+                text="Еще нет", callback_data=f"remind#uncompleted#{habit_id}"
+            ),
         ]
         keyboard = InlineKeyboardMarkup()
         keyboard.add(*buttons)

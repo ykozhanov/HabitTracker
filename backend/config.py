@@ -3,6 +3,8 @@ from typing import Optional
 
 from dotenv import load_dotenv
 
+from .exceptions import EnvError
+
 load_dotenv()
 
 POSTGRES_USER = getenv("POSTGRES_USER_BACKEND", "admin")
@@ -15,7 +17,9 @@ DATABASE_URL_DEFAULT = getenv(
 )
 
 
-def get_database_url(sync: Optional[bool] = False, host: Optional[str] = "db", port: Optional[int] = 5432) -> str:
+def get_database_url(
+    sync: Optional[bool] = False, host: Optional[str] = "db", port: Optional[int] = 5432
+) -> str:
     return DATABASE_URL_DEFAULT.format(
         SYNC="+psycopg2" if sync else "+asyncpg",
         POSTGRES_USER=POSTGRES_USER,
@@ -26,11 +30,15 @@ def get_database_url(sync: Optional[bool] = False, host: Optional[str] = "db", p
     )
 
 
-JWT_PRIVATE_KEY = getenv("JWT_PRIVATE_KEY")
-JWT_PUBLIC_KEY = getenv("JWT_PUBLIC_KEY")
+JWT_PRIVATE_KEY: str | None = getenv("JWT_PRIVATE_KEY")
+JWT_PUBLIC_KEY: str | None = getenv("JWT_PUBLIC_KEY")
+if JWT_PRIVATE_KEY is None or JWT_PUBLIC_KEY is None:
+    raise EnvError(
+        "Проверьте переменные окружения: 'JWT_PRIVATE_KEY' и 'JWT_PUBLIC_KEY'"
+    )
+
 JWT_ALGORITHM = "RS256"
 
 ACCESS_TOKEN_EXPIRE_MINUTES = int(getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 15))
 REFRESH_TOKEN_EXPIRE_DAYS = int(getenv("REFRESH_TOKEN_EXPIRE_DAYS", 30))
 COUNT_REPEAT_HABIT = int(getenv("COUNT_REPEAT_HABIT", 21))
-

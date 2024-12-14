@@ -1,10 +1,12 @@
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+from telebot.types import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    KeyboardButton,
+    ReplyKeyboardMarkup,
+)
 
 
 class GenKeyboards:
-
-    def __init__(self):
-        pass
 
     @staticmethod
     def yes_or_no_inline() -> InlineKeyboardMarkup:
@@ -26,19 +28,3 @@ class GenKeyboards:
         keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
         keyboard.add(*buttons)
         return keyboard
-
-    # @staticmethod
-    # def habits_inline_(page: int) -> InlineKeyboardMarkup:
-    #     buttons = [
-    #         [
-    #             InlineKeyboardButton(text="Удалить", callback_data=f"delete#{page}"),
-    #             InlineKeyboardButton(text="Редактировать", callback_data=f"update#{page}"),
-    #             InlineKeyboardButton(text="Выполнена", callback_data=f"completed#{page}"),
-    #         ],
-    #         [
-    #             InlineKeyboardButton(text="Создать новую привычку", callback_data=f"create#{page}"),
-    #         ],
-    #     ]
-    #     keyboard = InlineKeyboardMarkup()
-    #     keyboard.add(*buttons)
-    #     return keyboard

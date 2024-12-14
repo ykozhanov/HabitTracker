@@ -6,14 +6,11 @@ from fastapi.responses import JSONResponse
 
 from . import routes
 from .database import engine
-from .database.models import Base
 from .schemas import ErrorSchema
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    # async with engine.begin() as conn:
-        # await conn.run_sync(Base.metadata.create_all)
     yield
     await engine.dispose()
 
@@ -28,8 +25,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
         status_code=exc.status_code,
     )
     return JSONResponse(
-        status_code=exc.status_code,
-        content=error_response.model_dump()
+        status_code=exc.status_code, content=error_response.model_dump()
     )
 
 

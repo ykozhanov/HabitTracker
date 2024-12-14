@@ -1,6 +1,8 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
+from datetime import datetime
+
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Mapped, relationship
 
 Base = declarative_base()
 
@@ -8,32 +10,49 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True)
-    refresh_token = Column(String, unique=True, nullable=False)
+    id: Mapped[int] = Column(Integer, primary_key=True)
+    refresh_token: Mapped[str] = Column(String, unique=True, nullable=False)
 
-    user_info_telegram = relationship(argument="UserInfoTelegram", back_populates="user", lazy="joined", uselist=False)
-    user_celery_tasks = relationship(argument="CeleryTask", back_populates="user", lazy="subquery")
+    user_info_telegram: Mapped["UserInfoTelegram"] = relationship(
+        argument="UserInfoTelegram",
+        back_populates="user",
+        lazy="joined",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    user_celery_tasks: Mapped[list["CeleryTask"]] = relationship(
+        argument="CeleryTask",
+        back_populates="user",
+        lazy="subquery",
+        cascade="all, delete-orphan",
+    )
 
 
 class CeleryTask(Base):
     __tablename__ = "celery_tasks"
 
-    id = Column(Integer, primary_key=True)
-    habit_id = Column(Integer, unique=True)
-    celery_task_id = Column(String, nullable=False)
-    last_time_send_celery_task = Column(DateTime(timezone=True), nullable=False)
-    user_id = Column(ForeignKey(column="users.id"), nullable=False)
+    id: Mapped[int] = Column(Integer, primary_key=True)
+    habit_id: Mapped[int] = Column(Integer, unique=True)
+    celery_task_id: Mapped[str] = Column(String, nullable=False)
+    last_time_send_celery_task: Mapped[datetime] = Column(
+        DateTime(timezone=True), nullable=False
+    )
+    user_id: Mapped[int] = Column(ForeignKey(column="users.id"), nullable=False)
 
-    user = relationship(argument="User", back_populates="user_celery_tasks")
+    user: Mapped["User"] = relationship(
+        argument="User", back_populates="user_celery_tasks"
+    )
 
 
 class UserInfoTelegram(Base):
     __tablename__ = "users_telegram_info"
 
-    id = Column(Integer, primary_key=True)
-    user_id_telegram = Column(Integer, nullable=False)
-    chat_id_telegram = Column(Integer, nullable=False)
-    telegram_bot_token = Column(String, nullable=False)
-    user_id = Column(ForeignKey(column="users.id"), nullable=False)
+    id: Mapped[int] = Column(Integer, primary_key=True)
+    user_id_telegram: Mapped[int] = Column(Integer, nullable=False)
+    chat_id_telegram: Mapped[int] = Column(Integer, nullable=False)
+    telegram_bot_token: Mapped[str] = Column(String, nullable=False)
+    user_id: Mapped[int] = Column(ForeignKey(column="users.id"), nullable=False)
 
-    user = relationship(argument="User", back_populates="user_info_telegram")
+    user: Mapped["User"] = relationship(
+        argument="User", back_populates="user_info_telegram"
+    )

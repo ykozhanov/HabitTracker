@@ -15,7 +15,11 @@ DATABASE_URL_DEFAULT = getenv(
 )
 
 
-def get_database_url(sync: Optional[bool] = False, host: Optional[str] = "db_remind", port: Optional[int] = 5432) -> str:
+def get_database_url(
+    sync: Optional[bool] = False,
+    host: Optional[str] = "db_remind",
+    port: Optional[int] = 5432,
+) -> str:
     return DATABASE_URL_DEFAULT.format(
         SYNC="+psycopg2" if sync else "+asyncpg",
         POSTGRES_USER=POSTGRES_USER,
@@ -24,5 +28,6 @@ def get_database_url(sync: Optional[bool] = False, host: Optional[str] = "db_rem
         PORT=port,
         POSTGRES_DB=POSTGRES_DB,
     )
+
 
 URL_BACKEND = getenv("URL_BACKEND", "http://backend:8000/api")

@@ -1,5 +1,5 @@
+from datetime import datetime, time
 from typing import Optional
-from datetime import time, datetime
 
 from pydantic import BaseModel, field_validator
 
@@ -24,14 +24,14 @@ class HabitSchema(BaseModel):
 
     @classmethod
     @field_validator("remind_time", mode="before")
-    def parse_remind_time(cls, value) -> time:
+    def parse_remind_time(cls, value: str | time) -> time:
         if isinstance(value, str):
             return datetime.strptime(value, "%H:%M").time()
         return value
 
     @classmethod
     @field_validator("last_time_check", mode="before")
-    def parse_last_time_check(cls, value) -> datetime:
+    def parse_last_time_check(cls, value: str | datetime) -> datetime:
         if isinstance(value, str):
             return datetime.strptime(value, "%Y-%m-%d %H:%M")
         return value
@@ -51,9 +51,9 @@ class PatchHabitSchema(BaseModel):
 
     @classmethod
     @field_validator("remind_time", mode="before")
-    def parse_remind_time(cls, value) -> time:
+    def parse_remind_time(cls, value: str | time) -> time:
         if isinstance(value, str):
-            hour, minute = map(int, value.split(':'))
+            hour, minute = map(int, value.split(":"))
             return time(hour=hour, minute=minute)
         return value
 
@@ -61,26 +61,6 @@ class PatchHabitSchema(BaseModel):
         json_encoders = {
             "remind_time": lambda v: v.strftime("%H:%M"),
         }
-
-
-
-# class HabitTrackerSchema(BaseModel):
-#     habit_id: int
-#     remind_time: time
-#     last_time_check: datetime
-#     count_repeat: Optional[int] = None
-#
-#     class Config:
-#         from_attributes = True
-
-# class HabitRemindTelegramSchema(BaseModel):
-#     habit_id: Optional[int] = None
-#     remind_time: time
-#     chat_id: int
-#     user_id: int
-#
-#     class Config:
-#         from_attributes = True
 
 
 class SuccessGetHabitsListSchema(SuccessSchema):

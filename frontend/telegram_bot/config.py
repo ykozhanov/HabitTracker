@@ -1,7 +1,9 @@
-from typing import Optional
 from os import getenv
+from typing import Optional
 
 from dotenv import load_dotenv
+
+from .exceptions import EnvError
 
 load_dotenv()
 
@@ -15,7 +17,11 @@ DATABASE_URL_DEFAULT = getenv(
 )
 
 
-def get_database_url(sync: Optional[bool] = False, host: Optional[str] = "db_frontend", port: Optional[int] = 5432) -> str:
+def get_database_url(
+    sync: Optional[bool] = False,
+    host: Optional[str] = "db_frontend",
+    port: Optional[int] = 5432,
+) -> str:
     return DATABASE_URL_DEFAULT.format(
         SYNC="+psycopg2" if sync else "+asyncpg",
         POSTGRES_USER=POSTGRES_USER,
@@ -25,7 +31,11 @@ def get_database_url(sync: Optional[bool] = False, host: Optional[str] = "db_fro
         POSTGRES_DB=POSTGRES_DB,
     )
 
-BOT_TOKEN = getenv("BOT_TOKEN", None)
+
+BOT_TOKEN = getenv("BOT_TOKEN")
+if BOT_TOKEN is None:
+    raise EnvError("Проверьте переменную окружения: 'BOT_TOKEN'")
+
 URL_BACKEND = getenv("URL_BACKEND", "http://localhost:8000/api")
 COUNT_REPEAT_HABIT = int(getenv("COUNT_REPEAT_HABIT", 21))
 
