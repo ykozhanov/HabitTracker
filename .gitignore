@@ -18,3 +18,5 @@ certs
 .vscode
 
 .python-version
+
+.pylintrc

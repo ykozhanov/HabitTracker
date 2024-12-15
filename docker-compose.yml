@@ -22,8 +22,6 @@ services:
 
   db_backend:
     image: postgres:16.4
-#    env_file:
-#      - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER_BACKEND}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_BACKEND}
