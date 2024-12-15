@@ -42,6 +42,8 @@ class RemindTelegramController:
     def add_habit(
         self, habit: RemindHabitSchema, update: Optional[bool] = False
     ) -> None:
+        celery_task_database_controller = CeleryTaskController()
+        celery_task_database_controller.delete_celery_task(habit_id=habit.id)  # type: ignore
         remind_time: datetime | None = get_habit_remind_time(remind_time=habit.remind_time)  # type: ignore
         if remind_time and datetime.now(tz=timezone.utc) < remind_time:
             celery_task_database_controller = CeleryTaskController()
@@ -52,7 +54,6 @@ class RemindTelegramController:
                 CeleryTelegramBotController.revoke_task_by_id(
                     celery_task_id=celery_task_id
                 )
-                celery_task_database_controller.delete_celery_task(habit_id=habit.id)  # type: ignore
             user_controller = UserController(refresh_token=self._refresh_token)
             user: User = user_controller.get_user()
             user_info: UserInfoTelegram = user.user_info_telegram
